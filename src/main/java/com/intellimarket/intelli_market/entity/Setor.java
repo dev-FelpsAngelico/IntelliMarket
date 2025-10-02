@@ -15,10 +15,8 @@ import java.util.List;
 public class Setor {
 
     @Id
-    @UUID
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "AUTOID", updatable = false, nullable = false)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "NOME", nullable = false)
     private String nome;

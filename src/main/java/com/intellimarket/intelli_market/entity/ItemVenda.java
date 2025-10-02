@@ -13,7 +13,6 @@ public class ItemVenda {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "AUTOID", nullable = false)
     private Long id;
 
     @Column(name = "QUANTIDADE", nullable = false)

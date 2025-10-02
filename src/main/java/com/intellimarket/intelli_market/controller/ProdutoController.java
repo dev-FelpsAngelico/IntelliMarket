@@ -1,8 +1,12 @@
 package com.intellimarket.intelli_market.controller;
 
 import com.intellimarket.intelli_market.entity.Produto;
+import com.intellimarket.intelli_market.entity.Setor;
+import com.intellimarket.intelli_market.repository.ProdutoRepository;
+import com.intellimarket.intelli_market.repository.SetorRepository;
 import com.intellimarket.intelli_market.service.ProdutoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +18,12 @@ import java.util.List;
 public class ProdutoController {
 
     private final ProdutoService produtoService;
+
+    @Autowired
+    private SetorRepository setorRepository;
+
+    @Autowired
+    private ProdutoRepository produtoRepository;
 
     @GetMapping
     public ResponseEntity<List<Produto>> listar() {

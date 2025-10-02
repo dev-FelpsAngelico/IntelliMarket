@@ -14,10 +14,8 @@ import org.hibernate.validator.constraints.UUID;
 public class Usuario {
 
     @Id
-    @UUID
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "AUTOID", updatable = false, nullable = false)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "NOME", nullable = false)
     private String nome;
