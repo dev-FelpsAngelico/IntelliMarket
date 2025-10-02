@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.UUID;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -16,6 +16,7 @@ public class Setor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "AUTOID", unique = true, nullable = false, updatable = false)
     private Long id;
 
     @Column(name = "NOME", nullable = false)
@@ -26,5 +27,5 @@ public class Setor {
 
     @OneToMany(mappedBy = "setor", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<Produto> produtos;
+    private List<Produto> produtos = new ArrayList<>();
 }

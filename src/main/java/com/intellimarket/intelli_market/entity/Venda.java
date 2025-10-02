@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -16,6 +17,7 @@ public class Venda {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "AUTOID", unique = true, nullable = false, updatable = false)
     private Long id;
 
     @Column(name = "DATA", nullable = false)
@@ -31,5 +33,5 @@ public class Venda {
 
     @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<ItemVenda> itens;
+    private List<ItemVenda> itens = new ArrayList<>();
 }

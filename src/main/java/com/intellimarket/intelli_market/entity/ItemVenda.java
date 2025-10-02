@@ -8,11 +8,12 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-@Table(name = "itemVenda")
+@Table(name = "item_venda")
 public class ItemVenda {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "ID")
     private Long id;
 
     @Column(name = "QUANTIDADE", nullable = false)

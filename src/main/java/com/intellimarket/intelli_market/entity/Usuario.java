@@ -3,9 +3,9 @@ package com.intellimarket.intelli_market.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.UUID;
 
 @Entity
 @Getter
@@ -15,6 +15,7 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "AUTOID", unique = true, nullable = false, updatable = false)
     private Long id;
 
     @Column(name = "NOME", nullable = false)
@@ -24,10 +25,10 @@ public class Usuario {
     @Column(name = "EMAIL", unique = true, nullable = false)
     private String email;
 
-    @JsonIgnore
+    @NotNull(message = "A senha não pode ser nula")
     @Column(name = "SENHA", nullable = false)
     private String senha;
 
-    @Column(name = "TIPO_USUARIO")
+    @Column(name = "TIPO_USUARIO", nullable = false)
     private Integer tipoUsuario;
 }
