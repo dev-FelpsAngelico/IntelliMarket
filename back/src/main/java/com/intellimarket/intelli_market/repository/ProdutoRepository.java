@@ -15,4 +15,10 @@ public interface ProdutoRepository extends JpaRepository<Produto, Long> {
     List<Produto> findBySetorId(Long setorId);
 
     List<Produto> findByAtivoTrue();
+
+    // Busca todos os produtos pertencentes a um setor por ID
+    List<Produto> findBySetor_Id(Long setorId);
+
+    // Busca todos os produtos pertencentes a um setor pelo campo 'codigo' do Setor
+    List<Produto> findBySetor_Codigo(String codigo);
 }

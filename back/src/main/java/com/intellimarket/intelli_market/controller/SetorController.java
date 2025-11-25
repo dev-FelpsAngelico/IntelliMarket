@@ -1,19 +1,27 @@
 package com.intellimarket.intelli_market.controller;
 
 import com.intellimarket.intelli_market.entity.Setor;
+import com.intellimarket.intelli_market.entity.Produto;
 import com.intellimarket.intelli_market.service.SetorService;
-import lombok.RequiredArgsConstructor;
+import com.intellimarket.intelli_market.repository.ProdutoRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
+@CrossOrigin(origins = "http://localhost:8080")
 @RestController
-@RequestMapping("/setores")
-@RequiredArgsConstructor
+@RequestMapping("/api/setores")
 public class SetorController {
 
     private final SetorService setorService;
+    private final ProdutoRepository produtoRepo;
+
+    public SetorController(SetorService service, ProdutoRepository produtoRepo) {
+        this.setorService = service;
+        this.produtoRepo = produtoRepo;
+    }
 
     @GetMapping
     public ResponseEntity<List<Setor>> listar() {
@@ -57,5 +65,29 @@ public class SetorController {
     @GetMapping("/ativos")
     public ResponseEntity<List<Setor>> listarAtivos() {
         return ResponseEntity.ok(setorService.buscarAtivos());
+    }
+
+    /**
+     * Endpoint usado pelo frontend após escanear o QR code.
+     * Se 'valor' for numérico, interpreta como ID do setor; caso contrário
+     * interpreta como código do setor.
+     * Retorna todos os produtos pertencentes ao setor.
+     */
+    @GetMapping("/qrcode/{valor}")
+    public ResponseEntity<List<Produto>> produtosPorQr(@PathVariable String valor) {
+        // tenta interpretar como id numérico
+        try {
+            Long id = Long.parseLong(valor);
+            List<Produto> produtos = produtoRepo.findBySetor_Id(id);
+            if (produtos == null || produtos.isEmpty())
+                return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(produtos);
+        } catch (NumberFormatException ex) {
+            // não é número -> trata como código
+            List<Produto> produtos = produtoRepo.findBySetor_Codigo(valor);
+            if (produtos == null || produtos.isEmpty())
+                return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(produtos);
+        }
     }
 }

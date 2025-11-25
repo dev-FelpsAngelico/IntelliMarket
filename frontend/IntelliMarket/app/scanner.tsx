@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ActivityIndicator } from "react-native";
-import { BarCodeScanner } from "expo-barcode-scanner";
-import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Dimensions, Modal, Platform } from "react-native";
+// substitui uso de BarCodeScanner por CameraView + hooks
+import { Ionicons } from "@expo/vector-icons";
+import { CameraView, useCameraPermissions } from "expo-camera";
 
 // Esconde o header
 export const options = {
@@ -10,67 +11,129 @@ export const options = {
 	title: "",
 };
 
-export default function Scanner() {
-	const router = useRouter();
-	const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-	const [scanned, setScanned] = useState<boolean>(true);
-	const [loading, setLoading] = useState<boolean>(false);
-	const [message, setMessage] = useState<string | null>(null);
+export default function Scanner(props: { onQrScanned?: (data: any) => void } = {}) {
+	const { onQrScanned } = props;
+	// const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+	// const [scanned, setScanned] = useState<boolean>(true);
+	const [permission, requestPermission] = useCameraPermissions();
+	const [modalVisible, setModalVisible] = useState(false);
+	const [scanned, setScanned] = useState(false);
+	const [lastScanned, setLastScanned] = useState<string | null>(null);
+	const [facing, setFacing] = useState<"back" | "front">("back");
 
-	// Ajuste para seu host durante desenvolvimento
-	const API_BASE = 'http://10.0.2.2:8080';
+	// quando modal abrir, desbloqueia rotação; quando fechar, volta para portrait
+	useEffect(() => {
+		const applyOrientation = async () => {
+			if (modalVisible) {
+				setScanned(false);
+				if (Platform.OS !== "web") {
+					try {
+						const ScreenOrientation = await import("expo-screen-orientation");
+						await ScreenOrientation.unlockAsync();
+					} catch {
+						/* ignore if module missing at runtime */
+					}
+				}
+			} else {
+				if (Platform.OS !== "web") {
+					try {
+						const ScreenOrientation = await import("expo-screen-orientation");
+						await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+					} catch {
+						/* ignore */
+					}
+				}
+			}
+		};
+		applyOrientation();
+	}, [modalVisible]);
 
 	useEffect(() => {
-		(async () => {
-			const { status } = await BarCodeScanner.requestPermissionsAsync();
-			setHasPermission(status === "granted");
-		})();
+		return () => {
+			(async () => {
+				if (Platform.OS !== "web") {
+					try {
+						const ScreenOrientation = await import("expo-screen-orientation");
+						await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+					} catch {
+						/* ignore */
+					}
+				}
+			})();
+		};
 	}, []);
 
 	const handleBarCodeScanned = async ({ type, data }: { type: string; data: string }) => {
 		if (scanned) return;
 		setScanned(true);
-		setLoading(true);
-		setMessage(null);
+		setLastScanned(data);
+		setModalVisible(false); // Fecha o modal da câmera imediatamente
 
+		// Conecta ao backend para buscar produtos
 		try {
-			const resp = await fetch(`${API_BASE}/produtos/scan`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ data }),
+			// ATENÇÃO: Ajuste a URL se seu backend estiver em outro endereço/porta
+			const base = "http://localhost:8080";
+			const resp = await fetch(`${base}/api/setores/qrcode/${encodeURIComponent(data)}`, {
+				method: "GET",
+				headers: { Accept: "application/json" },
 			});
 
 			if (resp.ok) {
-				const produto = await resp.json();
-				if (produto && produto.id) {
-					router.push(`/product/${String(produto.id)}`);
-					return;
+				const produtos = await resp.json();
+				// Devolve os produtos para o componente pai, se houver callback
+				if (onQrScanned) {
+					try {
+						onQrScanned(produtos);
+					} catch (e) {
+						console.error("Erro no callback onQrScanned:", e);
+					}
 				}
-				setMessage('Resposta inesperada do servidor.');
+
+				// Monta uma lista de nomes de produtos para o alerta
+				const nomes = (Array.isArray(produtos) ? produtos : [])
+					.slice(0, 5) // Limita a 5 itens para o alerta não ficar muito grande
+					.map((p: any) => p.nome || "Produto sem nome")
+					.join("\n");
+
+				Alert.alert(
+					`Produtos Encontrados: ${Array.isArray(produtos) ? produtos.length : 0}`,
+					nomes || "Nenhum produto para exibir."
+				);
 			} else if (resp.status === 404) {
-				setMessage('Produto não encontrado para esse código.');
+				if (onQrScanned) onQrScanned(null);
+				Alert.alert("Não Encontrado", `Nenhum setor encontrado para o código "${data}".`);
 			} else {
-				const txt = await resp.text();
-				setMessage(`Erro ao consultar o produto: ${txt}`);
+				if (onQrScanned) onQrScanned(null);
+				const errorText = await resp.text();
+				Alert.alert("Erro no Servidor", `Status: ${resp.status}\nResposta: ${errorText}`);
 			}
-		} catch (err) {
-			setMessage('Erro de rede ao buscar produto.');
-		} finally {
-			setLoading(false);
+		} catch (err: any) {
+			if (onQrScanned) onQrScanned(null);
+			Alert.alert("Erro de Conexão", `Não foi possível conectar ao servidor. Verifique se o backend está rodando e acessível.\n\nDetalhes: ${err.message}`);
 		}
 	};
 
-	if (hasPermission === null) {
+	// mostra estado de permissão se ainda não resolvido
+	if (!permission) {
 		return (
 			<View style={styles.center}>
-				<Text>Solicitando permissão para usar a câmera...</Text>
+				<Text>Verificando permissão da câmera...</Text>
 			</View>
 		);
 	}
-	if (hasPermission === false) {
+	if (!permission.granted) {
 		return (
 			<View style={styles.center}>
-				<Text>Sem permissão para câmera. Habilite nas configurações.</Text>
+				<Text>Sem permissão para câmera. Toque para permitir.</Text>
+				<TouchableOpacity
+					style={{ marginTop: 12 }}
+					onPress={async () => {
+						const res = await requestPermission();
+						if (!res.granted) Alert.alert("Permissão negada", "Habilite a câmera nas configurações.");
+					}}
+				>
+					<Text style={{ color: "#0a84ff" }}>Permitir câmera</Text>
+				</TouchableOpacity>
 			</View>
 		);
 	}
@@ -88,33 +151,49 @@ export default function Scanner() {
 			{/* título */}
 			<View style={styles.header}>
 				<Text style={styles.appTitle}>IntelliMarket</Text>
+				{lastScanned ? <Text style={{ marginTop: 6, color: "#666" }}>Último QR: {lastScanned}</Text> : null}
 			</View>
 
 			{/* scanner quadrado tocável */}
 			<View style={styles.scannerWrapper}>
-				<TouchableOpacity activeOpacity={0.9} onPress={() => { setScanned(false); setMessage(null); }}>
+				<TouchableOpacity activeOpacity={0.9} onPress={() => setModalVisible(true)}>
 					<View style={[styles.scannerBox, { width: boxSize, height: boxSize }]}>
-						<BarCodeScanner
-							onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-							style={StyleSheet.absoluteFillObject}
-						/>
-						{scanned && (
-							<View style={styles.overlay}>
-								{loading ? (
-									<ActivityIndicator size="large" color="#fff" />
-								) : (
-									<Text style={styles.overlayText}>Toque para ativar o scanner</Text>
-								)}
-								{message && (
-									<View style={{ position: 'absolute', bottom: 24, backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 6 }}>
-										<Text style={{ color: '#fff' }}>{message}</Text>
-									</View>
-								)}
-							</View>
-						)}
+						{/* preview estático enquanto modal não aberto */}
+						<View style={StyleSheet.absoluteFillObject} />
+						<View style={styles.overlay}>
+							<Text style={styles.overlayText}>Toque para abrir o scanner</Text>
+						</View>
 					</View>
 				</TouchableOpacity>
 			</View>
+
+			{/* Modal com CameraView */}
+			<Modal visible={modalVisible} animationType="slide" onRequestClose={() => setModalVisible(false)}>
+				<View style={styles.modalRoot}>
+					<TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
+						<Ionicons name="close" size={28} color="#fff" />
+					</TouchableOpacity>
+					<TouchableOpacity
+						style={styles.cameraButton}
+						onPress={() => setFacing((f) => (f === "back" ? "front" : "back"))}
+					>
+						<Ionicons name="camera-reverse" size={28} color="#fff" />
+					</TouchableOpacity>
+
+					{/* escanear somente QR codes */}
+					<CameraView
+						style={styles.cameraView}
+						facing={facing}
+						barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+						onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+					/>
+
+					<View style={styles.modalOverlayCenter}>
+						<View style={styles.scanArea} />
+						<Text style={styles.instructionText}>Posicione o código dentro da área</Text>
+					</View>
+				</View>
+			</Modal>
 		</View>
 	);
 }
@@ -130,4 +209,12 @@ const styles = StyleSheet.create({
 	overlay: { ...StyleSheet.absoluteFillObject, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.35)" },
 	overlayText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 	center: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
+
+	modalRoot: { flex: 1, backgroundColor: "#000" },
+	cameraView: { flex: 1 },
+	modalOverlayCenter: { position: "absolute", top: 0, left: 0, right: 0, bottom: 0, justifyContent: "center", alignItems: "center" },
+	scanArea: { width: "70%", aspectRatio: 1, borderColor: "#fff", borderWidth: 2, borderRadius: 12 },
+	instructionText: { color: "#fff", marginTop: 16, backgroundColor: "rgba(0,0,0,0.6)", padding: 8, borderRadius: 8 },
+	closeButton: { position: "absolute", top: 40, right: 20, zIndex: 20 },
+	cameraButton: { position: "absolute", top: 40, left: 20, zIndex: 20 },
 });
