@@ -1,1 +1,8 @@
-com/intellimarket/intelli_market/IntelliMarketApplication.class
+com\intellimarket\intelli_market\entity\Venda$VendaBuilder.class
+com\intellimarket\intelli_market\entity\Usuario$Role.class
+com\intellimarket\intelli_market\IntelliMarketApplication.class
+com\intellimarket\intelli_market\entity\Setor$SetorBuilder.class
+com\intellimarket\intelli_market\entity\ItemVenda$ItemVendaBuilder.class
+com\intellimarket\intelli_market\entity\Venda$Status.class
+com\intellimarket\intelli_market\entity\Produto$ProdutoBuilder.class
+com\intellimarket\intelli_market\entity\Usuario$UsuarioBuilder.class

@@ -15,6 +15,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 @Getter
 @Setter
@@ -71,5 +73,6 @@ public class Produto {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "SETOR_ID", nullable = false)
+    @JsonIgnore
     private Setor setor;
 }

@@ -1,1 +1,23 @@
-/home/felps/Documentos/Projetos IntelliJ/IntelliMarket/src/main/java/com/intellimarket/intelli_market/IntelliMarketApplication.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\config\SecurityConfig.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\config\WebConfig.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\controller\ItemVendaController.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\controller\ProdutoController.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\controller\SetorController.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\controller\UsuarioController.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\controller\VendaController.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\entity\ItemVenda.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\entity\Produto.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\entity\Setor.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\entity\Usuario.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\entity\Venda.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\IntelliMarketApplication.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\repository\ItemVendaRepository.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\repository\ProdutoRepository.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\repository\SetorRepository.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\repository\UsuarioRepository.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\repository\VendaRepository.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\service\ItemVendaService.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\service\ProdutoService.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\service\SetorService.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\service\UsuarioService.java
+C:\Users\Felps\OneDrive\Área de Trabalho\Projects\IntelliMarket\back\src\main\java\com\intellimarket\intelli_market\service\VendaService.java

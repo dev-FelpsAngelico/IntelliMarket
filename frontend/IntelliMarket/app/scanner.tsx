@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Dimensions, Modal, Pla
 // substitui uso de BarCodeScanner por CameraView + hooks
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { useRouter } from "expo-router";
 
 // Esconde o header
 export const options = {
@@ -20,6 +21,7 @@ export default function Scanner(props: { onQrScanned?: (data: any) => void } = {
 	const [scanned, setScanned] = useState(false);
 	const [lastScanned, setLastScanned] = useState<string | null>(null);
 	const [facing, setFacing] = useState<"back" | "front">("back");
+	const router = useRouter();
 
 	// quando modal abrir, desbloqueia rotação; quando fechar, volta para portrait
 	useEffect(() => {
@@ -67,11 +69,9 @@ export default function Scanner(props: { onQrScanned?: (data: any) => void } = {
 		if (scanned) return;
 		setScanned(true);
 		setLastScanned(data);
-		setModalVisible(false); // Fecha o modal da câmera imediatamente
 
-		// Conecta ao backend para buscar produtos
+		// tenta consultar o backend para obter produtos do setor (por id ou código)
 		try {
-			// ATENÇÃO: Ajuste a URL se seu backend estiver em outro endereço/porta
 			const base = "http://localhost:8080";
 			const resp = await fetch(`${base}/api/setores/qrcode/${encodeURIComponent(data)}`, {
 				method: "GET",
@@ -80,36 +80,20 @@ export default function Scanner(props: { onQrScanned?: (data: any) => void } = {
 
 			if (resp.ok) {
 				const produtos = await resp.json();
-				// Devolve os produtos para o componente pai, se houver callback
-				if (onQrScanned) {
-					try {
-						onQrScanned(produtos);
-					} catch (e) {
-						console.error("Erro no callback onQrScanned:", e);
-					}
-				}
-
-				// Monta uma lista de nomes de produtos para o alerta
-				const nomes = (Array.isArray(produtos) ? produtos : [])
-					.slice(0, 5) // Limita a 5 itens para o alerta não ficar muito grande
-					.map((p: any) => p.nome || "Produto sem nome")
-					.join("\n");
-
-				Alert.alert(
-					`Produtos Encontrados: ${Array.isArray(produtos) ? produtos.length : 0}`,
-					nomes || "Nenhum produto para exibir."
-				);
+				router.push({ pathname: "/products", params: { products: JSON.stringify(produtos) } });
 			} else if (resp.status === 404) {
-				if (onQrScanned) onQrScanned(null);
-				Alert.alert("Não Encontrado", `Nenhum setor encontrado para o código "${data}".`);
+				onQrScanned && onQrScanned(null);
+				Alert.alert("Não encontrado", "Nenhum setor/produto correspondente ao QR.");
 			} else {
-				if (onQrScanned) onQrScanned(null);
-				const errorText = await resp.text();
-				Alert.alert("Erro no Servidor", `Status: ${resp.status}\nResposta: ${errorText}`);
+				const text = await resp.text();
+				onQrScanned && onQrScanned(null);
+				Alert.alert("Erro", `Resposta inesperada: ${resp.status}\n${text}`);
 			}
 		} catch (err: any) {
-			if (onQrScanned) onQrScanned(null);
-			Alert.alert("Erro de Conexão", `Não foi possível conectar ao servidor. Verifique se o backend está rodando e acessível.\n\nDetalhes: ${err.message}`);
+			onQrScanned && onQrScanned(null);
+			Alert.alert("Erro", `Falha ao buscar produtos: ${err?.message ?? String(err)}`);
+		} finally {
+			setModalVisible(false);
 		}
 	};
 

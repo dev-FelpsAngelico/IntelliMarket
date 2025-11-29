@@ -1,38 +1,25 @@
 import React from "react";
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from "react-native";
-import { useRouter } from "expo-router";
+import {
+	View,
+	Text,
+	StyleSheet,
+	TouchableOpacity,
+	Image,
+	ScrollView,
+	SafeAreaView,
+} from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
 
-type Order = {
-	id: string;
-	date: string;
-	total: number;
-	items: { name: string; qty: number; price: number }[];
+const formatBRL = (value: any) => {
+	const numValue = Number(value);
+	if (isNaN(numValue)) {
+		return "R$ 0,00";
+	}
+	return new Intl.NumberFormat("pt-BR", {
+		style: "currency",
+		currency: "BRL",
+	}).format(numValue);
 };
-
-const TEST_ORDERS: Order[] = [
-	{
-		id: "ORD-1001",
-		date: "2025-05-12",
-		total: 89.4,
-		items: [
-			{ name: "Arroz Integral 1kg", qty: 2, price: 12.9 },
-			{ name: "Óleo de Soja 900ml", qty: 1, price: 6.75 },
-			{ name: "Leite Integral 1L", qty: 3, price: 3.99 },
-		],
-	},
-	{
-		id: "ORD-1002",
-		date: "2025-06-01",
-		total: 27.6,
-		items: [
-			{ name: "Açúcar Refinado 1kg", qty: 2, price: 4.2 },
-			{ name: "Feijão Preto 1kg", qty: 1, price: 8.5 },
-		],
-	},
-];
-
-const formatBRL = (value: number) =>
-	new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 
 export const options = {
 	headerShown: false,
@@ -40,61 +27,72 @@ export const options = {
 	title: "",
 };
 
-export default function Orders() {
+export default function ProductDetailScreen() {
 	const router = useRouter();
+	const params = useLocalSearchParams();
 
-	const renderOrder = ({ item }: { item: Order }) => (
-		<TouchableOpacity
-			style={styles.orderCard}
-			onPress={() =>
-				Alert.alert(
-					`Pedido ${item.id}`,
-					`${item.date}\nTotal: ${formatBRL(item.total)}\n\nItens:\n${item.items
-						.map((it) => `• ${it.name} x${it.qty} (${formatBRL(it.price)})`)
-						.join("\n")}`
-				)
-			}
-		>
-			<View style={styles.orderHeader}>
-				<Text style={styles.orderId}>{item.id}</Text>
-				<Text style={styles.orderTotal}>{formatBRL(item.total)}</Text>
-			</View>
-			<Text style={styles.orderDate}>{item.date}</Text>
-		</TouchableOpacity>
-	);
+	const { name, price, image, description, sector } = params;
 
 	return (
-		<View style={styles.container}>
-			<TouchableOpacity style={styles.backButtonTop} onPress={() => router.back()}>
-				<Text style={styles.backButtonText}>Voltar</Text>
-			</TouchableOpacity>
+		<SafeAreaView style={styles.safeArea}>
+			<ScrollView contentContainerStyle={styles.scrollContainer}>
+				<TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+					<Text style={styles.backButtonText}>Voltar</Text>
+				</TouchableOpacity>
 
-			<Text style={styles.title}>Histórico de compras</Text>
+				{image ? (
+					<Image source={{ uri: image as string }} style={styles.image} />
+				) : (
+					<View style={styles.placeholder}>
+						<Text style={styles.placeholderText}>SEM IMAGEM</Text>
+					</View>
+				)}
 
-			<FlatList data={TEST_ORDERS} keyExtractor={(o) => o.id} renderItem={renderOrder} contentContainerStyle={styles.list} />
-		</View>
+				<View style={styles.infoContainer}>
+					<Text style={styles.productName}>{name || "Produto sem nome"}</Text>
+
+					{sector && <Text style={styles.productSector}>Setor: {sector}</Text>}
+
+					<Text style={styles.productPrice}>{formatBRL(price)}</Text>
+
+					<Text style={styles.descriptionTitle}>Descrição</Text>
+					<Text style={styles.productDescription}>
+						{description || "Nenhuma descrição disponível."}
+					</Text>
+				</View>
+			</ScrollView>
+		</SafeAreaView>
 	);
 }
 
 const styles = StyleSheet.create({
-	container: { flex: 1, padding: 16, backgroundColor: "#fff", paddingBottom: 100 },
-	title: { fontSize: 20, fontWeight: "700", marginBottom: 12, textAlign: "center" },
-	list: { paddingBottom: 24 },
-	orderCard: { padding: 12, backgroundColor: "#fafafa", borderRadius: 8, marginBottom: 12, borderWidth: 1, borderColor: "#eee" },
-	orderHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
-	orderId: { fontSize: 14, fontWeight: "700" },
-	orderTotal: { fontSize: 14, fontWeight: "700", color: "#0a84ff" },
-	orderDate: { color: "#666" },
-	backButtonTop: {
-		alignSelf: "flex-start",
-		marginLeft: 8,
-		marginBottom: 12,
+	safeArea: { flex: 1, backgroundColor: "#fff" },
+	scrollContainer: { paddingBottom: 100 },
+	backButton: {
+		position: "absolute",
+		top: 16,
+		left: 16,
+		backgroundColor: "rgba(0, 0, 0, 0.5)",
 		paddingHorizontal: 12,
 		paddingVertical: 8,
-		borderRadius: 8,
-		borderWidth: 1,
-		borderColor: "#0a84ff",
+		borderRadius: 20,
+		zIndex: 10,
 	},
-	backButtonText: { color: "#0a84ff", fontWeight: "700" },
+	backButtonText: { color: "#fff", fontWeight: "700" },
+	image: { width: "100%", height: 300, resizeMode: "cover" },
+	placeholder: {
+		width: "100%",
+		height: 300,
+		backgroundColor: "#eee",
+		justifyContent: "center",
+		alignItems: "center",
+	},
+	placeholderText: { color: "#999", fontWeight: "700" },
+	infoContainer: { padding: 20 },
+	productName: { fontSize: 24, fontWeight: "bold", marginBottom: 8 },
+	productSector: { fontSize: 16, color: "#666", marginBottom: 12 },
+	productPrice: { fontSize: 22, fontWeight: "700", color: "#0a84ff", marginBottom: 20 },
+	descriptionTitle: { fontSize: 18, fontWeight: "bold", marginBottom: 8 },
+	productDescription: { fontSize: 16, lineHeight: 24, color: "#333" },
 });
 

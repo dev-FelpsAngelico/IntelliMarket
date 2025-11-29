@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
 	View,
 	Text,
@@ -6,10 +6,10 @@ import {
 	Image,
 	TouchableOpacity,
 	StyleSheet,
-	Alert,
 	Dimensions,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Product = {
 	id: string;
@@ -20,13 +20,7 @@ type Product = {
 	sector?: string; // novo campo: setor/localização do produto
 };
 
-export const TEST_PRODUCTS: Product[] = [
-	{ id: "1", name: "Arroz Integral 1kg", price: 12.9, image: "https://via.placeholder.com/300", description: "Arroz integral nutritivo, embalagem 1kg.", sector: "Mercearia" },
-	{ id: "2", name: "Feijão Preto 1kg", price: 8.5, image: "https://via.placeholder.com/300", description: "Feijão preto de qualidade, ideal para seu dia a dia.", sector: "Grãos" },
-	{ id: "3", name: "Açúcar Refinado 1kg", price: 4.2, image: "https://via.placeholder.com/300", description: "Açúcar refinado para uso doméstico.", sector: "Açúcar & Doces" },
-	{ id: "4", name: "Óleo de Soja 900ml", price: 6.75, image: "https://via.placeholder.com/300", description: "Óleo de soja puro, ideal para frituras e temperos.", sector: "Óleos" },
-	{ id: "5", name: "Leite Integral 1L", price: 3.99, image: "https://via.placeholder.com/300", description: "Leite integral pasteurizado 1 litro.", sector: "Laticínios" },
-];
+const PRODUCTS_STORAGE_KEY = "@IntelliMarket:products";
 
 export const options = {
 	headerShown: false,
@@ -36,8 +30,47 @@ export const options = {
 
 export default function Products() {
 	const router = useRouter();
+	const params = useLocalSearchParams();
 	const { width } = Dimensions.get("window");
 	const imageSize = 84;
+	const [products, setProducts] = useState<Product[]>([]);
+
+	useEffect(() => {
+		const loadProducts = async () => {
+			// Se novos produtos foram passados por parâmetro (ex: do scanner)
+			if (params.products) {
+				try {
+					const parsedProducts = JSON.parse(params.products as string);
+					const newProducts = parsedProducts.map((p: any) => ({
+						id: p.id.toString(),
+						name: p.nome,
+						price: p.valor,
+						image: p.imageUrl,
+						description: p.descricao,
+						sector: p.setor?.nome, // Adicionando o nome do setor
+					}));
+
+					// Salva no AsyncStorage e atualiza o estado
+					await AsyncStorage.setItem(PRODUCTS_STORAGE_KEY, JSON.stringify(newProducts));
+					setProducts(newProducts);
+				} catch (e) {
+					console.error("Failed to parse or save products from params", e);
+				}
+			} else {
+				// Se não há parâmetros, tenta carregar do AsyncStorage
+				try {
+					const storedProducts = await AsyncStorage.getItem(PRODUCTS_STORAGE_KEY);
+					if (storedProducts) {
+						setProducts(JSON.parse(storedProducts));
+					}
+				} catch (e) {
+					console.error("Failed to load products from storage", e);
+				}
+			}
+		};
+
+		loadProducts();
+	}, [params.products]);
 
 	const formatBRL = (value: number) =>
 		new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -46,7 +79,12 @@ export default function Products() {
 		<TouchableOpacity
 			activeOpacity={0.8}
 			style={styles.itemContainer}
-			onPress={() => router.push(`/product/${item.id}`)} // navega para detalhe
+			onPress={() =>
+				router.push({
+					pathname: "/orders",
+					params: item as any,
+				})
+			} // navega para a tela de "pedidos" com os dados do produto
 		>
 			<View style={[styles.imageWrapper, { width: imageSize, height: imageSize }]}>
 				{item.image ? (
@@ -76,7 +114,7 @@ export default function Products() {
 			<View style={styles.divider} />
 
 			<FlatList
-				data={TEST_PRODUCTS}
+				data={products}
 				keyExtractor={(p) => p.id}
 				renderItem={renderItem}
 				contentContainerStyle={styles.listContent}
